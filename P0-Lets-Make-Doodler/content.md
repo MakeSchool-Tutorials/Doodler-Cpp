@@ -1,36 +1,29 @@
 ---
-title: "Get started with this tutorial!"
-slug: tutorial-page-1
+title: "Let's make Doodler!"
+slug: lets-make-doodler
 ---
 
-#Just regular Markdown
+Doodler is a collaborative drawing canvas for iOS. You can draw stuff on the screen, and it will show up on your friend's device!
 
-Content...
 
-#Additional Support
+<video width="100%" controls>
+	<source src="https://s3.amazonaws.com/mgwu-misc/Doodler+Cpp+Tutorial/intro720p.mov" type="video/mp4">
+</video>
 
-We also support:
+To make it, we will use [Cocos2d-x](http://cocos2d-x.org/), a C++ game framework. We'll also make use of Apple's [Multipeer Connectivity](https://developer.apple.com/library/prerelease/ios/documentation/MultipeerConnectivity/Reference/MultipeerConnectivityFramework/index.html) framework to connect two devices together.
 
-Action Highlights:
+#Topics Covered in this Tutorial
 
-> [action]
-> Add the following import statement to the top of _TimelineViewController.swift_:
->
->
-    import ConvenienceKit
+During this tutorial you will learn:
 
-Info Boxes:
-> [info]
-> You should be careful
-because of X, Y and Z
+- How to make a Cocos2d-x project from the command-line tool
+- How to draw on the screen with a `DrawNode`
+- How to make a C++ singleton
+- How to synchronize the state of two devices in real-time
+- How to create JSON messages
 
-And hidden solutions:
 
-> [solution]
-> This is how it would have worked!
+*And much, much more!*
 
-Enumerations should look beautiful, too:
 
-1. Is this good?
-2. Or not?
-3. Huh?
+
