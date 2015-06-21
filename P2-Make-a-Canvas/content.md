@@ -294,8 +294,10 @@ Inside the `onTouchMoved` block, add this line:
 	
 Before we even try to do any drawing, let's just log those results to console so that we can see if it works.
 
+> [action]
+> 
 Add this line next:
-
+>
 	CCLOG("Touch Moved! x:%f y:%f", touchPos.x, touchPos.y);
 	
 This will print to the console string `Touch Moved!` followed by the x and y coordinates of the touch. It should look like this:
@@ -309,3 +311,68 @@ This will print to the console string `Touch Moved!` followed by the x and y coo
 Unlike `printf`, `CCLOG` has the nice property that it's cross platform - it was designed that way. Interestingly it only works in debug builds - logging can be expensive in terms of processing power and Cocos2d-x is clever in that it has the compiler remove `CCLOG`s for release builds so as to not adversely affect performance.
 
 Great! Now let's figure out how to draw something to the screen.
+
+#Draw Some Stuff
+
+In order to draw a line on the screen, we need to have two points to draw between, a start position and a finish position. The way our touch handling is set up now, we only ever know the position where the touch is currently, which is not enough to draw a line.
+
+We need to create a variable that will store the previous touch position, so that we can draw a line from there to the current touch position.
+
+> [action]
+> 
+At the very top of `setupTouchHandling()`, declare this `lastTouchPos`:
+>
+    static Vec2 lastTouchPos;
+    
+By declaring `lastTouchPos` `static` we ensure that it isn't deallocated, even when it goes out of scope. So that means, if we set the value in `onTouchMoved`, the next time `onTouchMoved` is called, we can read the value we set previously. It's like an instance variable, except it can only be accessed within the scope of `setupTouchHandling()`.
+
+> [action]
+> 
+First, let's initialize `lastTouchPos` in `onTouchBegan`. Inside the `onTouchBegan` block, type this:
+>
+	lastTouchPos = drawNode->convertTouchToNodeSpace(touch);
+	
+Now, in `onTouchMoved` we can use that value. We're going to use the `drawSegment` method in `drawNode` to draw a line. `drawSegment` takes 4 parameters, the declaration looks like this:
+
+	void DrawNode::drawSegment(const Vec2 &from, const Vec2 &to, float radius, const Color4F &color)
+
+> [action]
+> 
+See if you can figure out how to, in `onTouchMoved`, draw a black line from `lastTouchPos` to `touchPos`, with a radius of `4.0f` points.
+
+Did you figure it out? It should look like this:
+
+> [solution]
+> 
+	drawNode->drawSegment(lastTouchPos, touchPos, 4.0f, Color4F(0.0f, 0.0f, 0.0f, 1.0f));
+
+Now that we are drawing to the screen, it's not a bad idea to delete the `CCLOG` we had in `onTouchMoved` - we don't need it anymore.
+
+So let's run it! Let's see our beautiful drawing canvas!
+
+![Interesting drawing in simulator](whoahTrippy.png)
+
+What happened there? That's neat, but not exactly the behavior we were looking for. 
+
+> [action]
+> 
+See if you can figure out what's happening and how to fix it.
+
+=
+
+> [solution]
+> 
+We set `lastTouchPosition` once per touch, in `onTouchBegan`. So every line is drawn with the starting point at `lastTouchPosition` and ends at wherever the `touchPos` is in `onTouchMoved`. 
+> 
+We can fix that by setting the value of `lastTouchPos` at the very end of `onTouchMoved`:
+
+	lastTouchPos = touchPos;
+	
+Now that we've fixed it, let's see how it looks!
+
+![iOS Simulator drawing](drawingWorks.png)
+
+
+
+
+
