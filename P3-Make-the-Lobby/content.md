@@ -269,3 +269,41 @@ Now it's your turn to code the `duoButton`. You'll have to create the `duoPresse
 When you're done with that, your lobby should look like this:
 
 ![Lobby with two buttons](afterDuoButton.png)
+
+#Make the Solo Button Work
+
+Let's make it so that we can transition to the drawing canvas if the user clicks the solo button.
+
+> [action]
+> 
+In the `soloPressed` callback, add this:
+>
+	if (eEventType == ui::Widget::TouchEventType::ENDED)
+	{
+>
+	}
+	
+`soloPressed` is called when the touch begins, and as the touch is moving, but we want to only transition if the touch ends on the button, to be sure the user didn't accidently touch it.
+
+> [action]
+> 
+Inside the `if` block, add this code:
+>
+	Scene* scene = Scene::create();
+>	   
+	DrawingCanvas* drawingCanvas = DrawingCanvas::create();
+	scene->addChild(drawingCanvas);
+>	   
+	Director::getInstance()->pushScene(scene);
+    
+First we create a new `Scene`, then we create a new instance of `DrawingCanvas` and add it to the `scene`. Finally we tell the `Director` to switch to our newly created scene.
+
+> [action]
+> 
+The compiler will complain that it doesn't know what `DrawingCanvas` is, don't forget to `#include` it at the top!
+
+<video width="100%" controls>
+	<source src="https://s3.amazonaws.com/mgwu-misc/Doodler+Cpp+Tutorial/lobbyToCanvas.mov" type="video/mp4">
+</video>
+
+Nice! Now let's start polishing up the `DrawingCanvas`.
