@@ -371,8 +371,3 @@ We can fix that by setting the value of `lastTouchPos` at the very end of `onTou
 Now that we've fixed it, let's see how it looks!
 
 ![iOS Simulator drawing](drawingWorks.png)
-
-
-
-
-
