@@ -30,7 +30,7 @@ Cocos2d Console is super great, because it will generate an Xcode-based iOS and 
 >
 In our case we're just going to be using the Xcode project.
 
-=
+<!--block seperator-->
 
 > [action]
 > 
@@ -38,9 +38,13 @@ In our case we're just going to be using the Xcode project.
 
 In there you will see an executable named *cocos*. This is the Cocos2d Console command line tool.
 
-> Start a new *Terminal* session. 
+We will use *Terminal* to run the Cocos2d Console.
 
+> [info]
+> 
 If you're not familiar with [Terminal](https://en.wikipedia.org/wiki/Terminal_(OS_X)), it's OSX's built in shell. The default language used to interface with terminal is called (Bash)[https://en.wikipedia.org/wiki/Bash_(Unix_shell)].
+
+<!--block seperator-->
 
 > [action]
 > 
@@ -56,7 +60,7 @@ Your new terminal window should look something like this:
 
 ![Blank terminal window](newTerminal.png)
 
-We're going to navigate to the Cocos2d Console tool in Terminal so we can execute it.
+We're going to navigate to the Cocos2d Console tool in Terminal so we can run it.
 
 > [action]
 > 
@@ -101,6 +105,8 @@ This command will create a new Cocos2d-x project. The `-p` parameter specifies t
 > 
 > At this point it's okay to delete the unzipped folder if you want; the process of making the new project the necessary Cocos2d-x source code was copied into the new project directory.
 
+<!--block seperator-->
+
 > [action]
 > 
 Navigate up four directories to the newly created *Doodler* one. From there, navigate to the Xcode project in *proj.ios_mac* and open it.
@@ -109,7 +115,7 @@ Navigate up four directories to the newly created *Doodler* one. From there, nav
 
 #Make it Portrait
 
-The default Cocos2d-x template creates a landscape game, but we want this one to be portrait.  Thankfully it's easy to do in Xcode.
+The default Cocos2d-x template creates a landscape game, but we want this one to be portrait. Thankfully it's easy to do in Xcode.
 
 > [action]
 > 
