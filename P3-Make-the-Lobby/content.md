@@ -84,7 +84,7 @@ Then, in `HelloWorld::init()` `create()` a new `Lobby` instead of `DrawingCanvas
 We're going to need some assets for the logo and buttons in the lobby.
 
 > [action]
-Get started by [downloading the asset pack](Doodler-Assets.zip).
+Get started by [downloading the asset pack](https://raw.githubusercontent.com/MakeSchool-Tutorials/Doodler-Cpp/master/P3-Make-the-Lobby/Doodler-Assets.zip).
 >
 Save it in the *Resources* directory inside your project folder.
 >
