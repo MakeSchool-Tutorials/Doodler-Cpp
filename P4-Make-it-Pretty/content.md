@@ -3,6 +3,6 @@ title: "Make it pretty"
 slug: make-it-pretty
 ---     
 
-#Just regular Markdown
+#Time to Add Some Polish
 
-Content...
+We made some stuff.
