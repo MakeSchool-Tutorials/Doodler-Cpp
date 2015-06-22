@@ -1,6 +1,6 @@
 ---
-title: "Move on with this tutorial!"
-slug: tutorial-page-2
+title: "Make it pretty"
+slug: make-it-pretty
 ---     
 
 #Just regular Markdown
