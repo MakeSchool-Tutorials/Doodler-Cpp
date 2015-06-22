@@ -206,4 +206,66 @@ Now try running it! You should see something like this:
 
 Okay, now it's time to add some buttons for the users to press. There will be a single player mode button - that one says "solo", and a multiplayer button that says "duo". 
 
-These buttons will use *
+These buttons will use *callbacks*. Callbacks are methods we write in our class that are triggered whenever the button is pressed.
+
+> [action]
+> 
+In *Lobby.h*, declare the following `protected` callback method:
+>
+	void soloPressed(cocos2d::Ref* pSender, cocos2d::ui::Widget::TouchEventType eEventType);
+>	
+You will find that the compiler complains that it doesn't know what a `cocos2d::ui::Widget` is - we can fix that by adding another `#include` at the top:
+>
+	#include "CocosGUI.h"
+	
+We declared the callback like this because it's the way Cocos2d-x expects it to be declared. When the single player button is pressed, it will notify us by calling `soloPressed`, and it will pass a reference to the `pSender` of the button press (something we can specify, but won't use in this case) and also what kind of press it is, via `eEventType`.
+
+> [action]
+Time to implement an empty method for the callback. Add this to *Lobby.cpp*:
+>
+	void Lobby::soloPressed(Ref *pSender, ui::Widget::TouchEventType eEventType)
+	{
+>
+	}
+
+We'll fill in more of that method later.
+
+So now let's make the single-player mode button.
+
+> [action]
+> 
+In `setupUI()` below where we created the `logo`, make a button:
+>
+	ui::Button* soloButton = ui::Button::create();
+>
+Set the anchor point to be in the middle:
+>
+	soloButton->setAnchorPoint(Vec2(0.5f, 0.5f));
+>	
+and set the position to be in the middle of the screen's width, and 40% up the screen's height:
+>
+    soloButton->setPosition(Vec2(visibleSize.width / 2.0f, visibleSize.height * 0.4f));
+>   
+Next we'll tell the button to use the appropriate images from the asset pack. The first parameter specifies the image for the *normal* state, and the second is the image for the *pressed* state.
+>
+    soloButton->loadTextures("soloButton.png", "soloButtonPressed.png");
+>   
+Now we'll tell the button about the `soloPressed` callback method that we made earlier:
+>
+	soloButton->addTouchEventListener(CC_CALLBACK_2(Lobby::soloPressed, this));
+>	
+Finally, we add the button to the `Lobby`.
+>
+    this->addChild(soloButton);
+    
+So now your lobby should look like this:
+
+![Lobby with one button](afterSoloButton.png)
+
+> [action]
+> 
+Now it's your turn to code the `duoButton`. You'll have to create the `duoPressed` callback, and don't forget to load the correct images. It should be positioned in the middle of the width of the screen, and 25% up the height of the screen.
+
+When you're done with that, your lobby should look like this:
+
+![Lobby with two buttons](afterDuoButton.png)
