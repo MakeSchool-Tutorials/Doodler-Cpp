@@ -1,5 +1,5 @@
 ---
-title: "Make the Lobby"
+title: "Make the lobby"
 slug: making-the-lobby
 ---     
 
