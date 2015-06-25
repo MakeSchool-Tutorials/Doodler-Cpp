@@ -344,5 +344,87 @@ It works! Great.
 > 
 One more thing with the color picker buttons: let's make it more responsive to the user. Make it so that when the touch begins, the touched button scales to 85% of it's original size. You can use the `setScale()` method. Once the touch has ended, or is cancelled, return the scale to 100% of the original size. That way it will feel more like a real button being pressed.
 
+#Change Stroke Width
 
-#Playing with the Stroke
+Now it's beginning to look good! But let's make it even better. Let's change the radius of the stroke depending on the speed of the user's touch movement. if they move quickly, the stroke will become thicker.
+
+We will be able to accomplish this entirely with the `setupTouchHandling()` method.
+
+We can use the existing `lastTouchPos` to compare with the current touch position to figure out how much distance the user's touch has traveled.
+
+> [action]
+> 
+In the `onTouchMoved` lamda expression, before `drawSegment`, compute the distance traveled with the `Vec2` `distance` function:
+>
+	float distance = lastTouchPos.distance(touchPos); 
+>	
+We will use this this distance as the radius for our line. We will change how `radius` is computed in the next step, but for now, let's assign `radius = distance`.
+>
+	float radius = distance;
+>	
+Then use `radius` to draw the segment.
+
+It should look something like this:
+
+![Ugly lines drawn](uglyBumps.png)
+
+Unfortunately, because of the ubrupt changes in the user's drawing speed, the lines are awkward looking.
+
+We can smooth out the line radius transitions by using a [lowpass filter](https://en.wikipedia.org/wiki/Low-pass_filter). Lowpass filters allow low frequencies (slow changes) through to the output value, but high frequencies (rapid changes) are attenuated.
+
+In this case, we are going to use a [simple infinite impulse response filter](https://en.wikipedia.org/wiki/Low-pass_filter#Simple_infinite_impulse_response_filter), which is a kind of discrete lowpass filter.
+
+> [action]
+> 
+> If you want a challenge, try to implement the simple infinite impulse response filter yourself. You will have to create the variable `lastRadius` and store the last radius, the same way we do with `lastTouchPos`. Don't forget to initialize `lastRadius` to `INITIAL_RADIUS` in `onTouchBegan`. You can use a value of `1.0f` for `RC`, and you can assume a value of `1.0f / 60.0f` for `dt`. 
+
+Did you figure it out? If not, that's okay, this was a bit more challenging. Your `setupTouchHanding()` method should look like this after all these steps:
+
+> [solution]
+>
+	void DrawingCanvas::setupTouchHandling()
+	{
+		static Vec2 lastTouchPos;
+		static float lastRadius = INITIAL_RADIUS;
+		auto touchListener = EventListenerTouchOneByOne::create();
+>	    
+		touchListener->onTouchBegan = [&](Touch* touch, Event* event)
+		{
+		   lastTouchPos = drawNode->convertTouchToNodeSpace(touch);
+		   lastRadius = INITIAL_RADIUS;
+		   return true;
+		};
+>	    
+		touchListener->onTouchMoved = [&](Touch* touch, Event* event)
+		{
+		   Vec2 touchPos = drawNode->convertTouchToNodeSpace(touch);
+>	   
+		   float distance = lastTouchPos.distance(touchPos);
+>	   
+		   float dt = 1.0f / 60.0f;
+		   float rc = 1.0f;
+		   float alpha = dt / (rc + dt);
+		   float radius = (alpha * distance) + (1.0f - alpha) * lastRadius;
+>	   
+		   drawNode->drawSegment(lastTouchPos, touchPos, radius, selectedColor);
+>	   
+		   lastRadius = radius;
+		   lastTouchPos = touchPos;
+		};
+>	    
+		this->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener, this);
+	}
+
+Now you should have much smoother lines!
+
+![Smoother lines](smoothLines.png)
+
+#Turn Off Debug Stats
+
+The debug stats in the lower-left hand corner can be very helpful. But they can also sometimes be distracting. You can turn them off by going to *AppDelegate.cpp* and finding the line:
+
+	director->setDisplayStats(true);
+	 
+> [action]
+> 
+Set that to `false` to disable debug stats.
