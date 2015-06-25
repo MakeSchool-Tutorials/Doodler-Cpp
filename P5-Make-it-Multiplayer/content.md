@@ -522,8 +522,96 @@ Finally, we create a new `LineData` object, and populate it before we return it.
     
 With that we have coded all the functions we need to encode and decode JSON strings. More complicated games might have many more JSON messages and encoders, but this is all we need for Doodler.
 
+#Hook it All Up
 
-    
+Now that we can send the line drawing data between devices, all that's left to do is have `DrawingCanvas` be able to send what the user is drawing over the network, and to have it respond to and display the lines being sent to it.
 
+Create a new public method in *DrawingCanvas.h* that looks like this:
+
+	void receivedData(const void* data, unsigned long length);
+	
+This is the callback we will get in `DrawingCanvas` when we receive a JSON message containing line data from the other device. Notice that we just get a pointer to a block of memory (`const void* data` has no type). We also get the `length` of the data in memory, so that we can be careful not to access any data outside of the JSON message. If we were to try to access memory outside the bounds of `length`, the app would crash because of a [segmentation fault](https://en.wikipedia.org/wiki/Segmentation_fault).
     
+The implementation of `receivedData()` is fairly simple:
+
+First, we reinterpret the untyped pointer to a C-style string:
+
+    const char* cstr = reinterpret_cast<const char*>(data);
     
+C-style strings are actually arrays of `char`s. C strings are not a particularly safe data type to use, but they are fairly common. C strings have the type `const char*`.
+
+Next we construct a `std::string` from the C string because we coded our `JSONPacker::unpackLineData` function to expect a `std::string`:
+
+	std::string json = std::string(cstr, length);
+	
+Next we unpack the JSON string into a `LineData` `struct`:
+
+	JSONPacker::LineData lineData = JSONPacker::unpackLineDataJSON(json);
+    
+Don't forget to `#include "JSONPacker.h"`.
+    
+Finally we draw the line segment that was sent over the network using the data from `lineData`:
+
+	drawNode->drawSegment(lineData.startPoint, lineData.endPoint, lineData.radius, lineData.color);
+	
+Great! Now we can read incoming messages sent from the other device to draw their lines. But we need to be able to send our lines to the other device.
+
+In *DrawingCanvas.h*, add the following `protected` method:
+
+	void sendStrokeOverNetwork(cocos2d::Vec2 startPoint, cocos2d::Vec2 endPoint, float radius, cocos2d::Color4F color);
+	
+This method should take those four input variables and pack them into a JSON-encoded `std::string`.
+
+See if you can code it so that you generate the correct `json` `std::string`.
+
+Once you've done that, we'll take that `std::string` and send it over the network using a method that we haven't coded yet. So for now, put this piece of code at the end of `sendStrokeOverNetwork()`:
+
+	SceneManager::getInstance()->sendData(json.c_str(), json.length());
+
+Your final `sendStrokeOverNetwork()` method should look something like this:
+
+> [solution]
+> 
+	void DrawingCanvas::sendStrokeOverNetwork(Vec2 startPoint, Vec2 endPoint, float radius, Color4F color)
+	{
+		JSONPacker::LineData lineData;
+		lineData.startPoint = startPoint;
+		lineData.endPoint = endPoint;
+		lineData.radius = radius;
+		lineData.color = color;
+>	    
+		std::string json = JSONPacker::packLineData(lineData);
+>	    
+		SceneManager::getInstance()->sendData(json.c_str(), json.length());
+	}
+	
+We have to call `sendStrokeOverNetwork()` at some point if we want the method to do its job. Let's put it in the `onTouchMoved` lambda expression, right after `drawNode->drawSegment()`:
+
+	if (this->networkedSession)
+ 	{
+		this->sendStrokeOverNetwork(lastTouchPos, touchPos, radius, selectedColor);
+	}
+
+Now let's move over to `SceneManager` to code the missing `sendData()` method. Declare it like this:
+
+	void sendData(const void* data, unsigned long length);
+	
+The implementation is very simple - just call the same method on `networkingWrapper` and pass the parameters along.
+
+Now we have to code `receivedData()` in `SceneManager`. Again, it's very simple. We can just pass the data along to `drawingCanvas`, but there's one catch.
+
+Try to code it, and see if your implementation has any bugs. Can you fix it?
+
+The result should look like this:
+
+> [solution]
+> 
+	void SceneManager::receivedData(const void *data, unsigned long length)
+	{
+	    if (drawingCanvas)
+	    {
+	        drawingCanvas->receivedData(data, length);
+	    }
+	}
+
+We have to first check that `drawingCanvas` exists! If we call a method on a a nullptr then the game will crash.
