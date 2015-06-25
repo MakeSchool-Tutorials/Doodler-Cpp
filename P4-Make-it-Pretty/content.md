@@ -180,3 +180,120 @@ The difference between the off-white and pure white might not be immediately obv
 ![Off-white](offWhite.png)
 
 Now can you see the difference?
+
+#Add the Color Pickers
+
+We're going to let the user pick between 5 different colors to draw to the canvas with. They are red, yellow, green, blue and purple. So let's create the interface that will allow the user to pick. We're going to display 5 round color picker buttons, each with a different color. When the user picks one, we'll display a white checkmark on top of the color button.
+
+It will look like this:
+
+![5 color swatches](swatches.png)
+
+First, we'll create an instance variable for the checkmark sprite because we will want to be able to access it from different methods in `DrawingCanvas.cpp`.
+
+> [action]
+> 
+Add the `protected` instance variable to *DrawingCanvas.h*:
+>
+	cocos2d::Sprite* check;
+>	
+While you're at it, add the instance variable that we will use to store the user's currently selected color:
+>
+	cocos2d::Color4F selectedColor;
+	
+Also, let's add the callback method for when the user presses a color button:
+>
+	void colorChangePressed(cocos2d::Ref* pSender, cocos2d::ui::Widget::TouchEventType eEventType);
+>
+Now flip over to *DrawingCanvas.cpp*. 
+>
+Add an empty implementation of `colorChangePressed`.
+>
+In `setupMenus()`, create the `check` sprite using the `"checkMark.png`" image. Set the *anchor point* to (0.5, 0.5) and the *normalized position* to (0.5, 0.5). 
+
+It's very convenient to be able to set the normalized position - instead of specifying the position in pixels, we get to specify the position in a percentage of the parent's size, where `0` is 0% and `1.0f` is 100%. So for example, by setting the normalized position to (0.5, 0.5), we tell the `check` `Sprite` to appear right in the middle of its parent.
+
+> [solution]
+> 
+    check = Sprite::create("checkMark.png");
+    check->setAnchorPoint(Vec2(0.5f, 0.5f));
+    check->setNormalizedPosition(Vec2(0.5f, 0.5f));
+
+Next, we'll create a `Node` called `colorButtonLayout` that will hold the 5 color buttons. That way, if we ever choose move the color watches, we can just reposition the `colorButtonLayout` instead of having to move each button individually. In general, it's a good idea to organize your menus into different nodes to make positioning and resizing easier.
+
+> [action]
+> 
+Create a new `Node` called `colorButtonLayout`. Make it have a width that is same as the `visibleSize` width, and a height that is 20% of the `visibleSize` height. Set the *anchor point* to be (0.5, 0.0). Set the position so that it is in the middle-bottom of the screen. Then add it as a child to the scene.
+
+<!--html comment to break blocks-->
+
+> [solution]
+> 
+    Node* colorButtonLayout = Node::create();
+    colorButtonLayout->setContentSize(Size(visibleSize.width, visibleSize.height * 0.2f));
+    colorButtonLayout->setAnchorPoint(Vec2(0.5f, 0.0f));
+    colorButtonLayout->setPosition(Vec2(visibleSize.width / 2.0f, 0.0f));
+    this->addChild(colorButtonLayout);
+    
+Now we will create and add all 5 color buttons, using a `for` loop.
+
+> [action]
+> 
+We will start and index `i = 1`, which will make positioning the buttons easier. Add this loop to `setupMenus()`.
+>
+    for (int i = 1; i <= 5; ++i)
+    {
+>   
+    }
+>
+Inside the loop, create a new `ui::Button*` called `colorButton`.
+Set the following properties:
+>
+- *anchor point* - `(0.5f, 0.0f)`
+- *textures* - `"colorSwatch.png" for both normal and pressed states
+- *touch event listener* - DrawingCanvas::colorChangePressed
+>
+For now, let's set all the button colors to blue:
+>
+	colorButton->setColor(Color3B(COLOR_BLUE));
+>
+Then add the button to the `colorButtonLayout`:
+>
+	colorButtonLayout->addChild(colorButton);
+
+<!--html comment to break boxes-->
+
+> [action]
+> 
+Now set the positions of the buttons so that it looks like this. You can use the `i` index in the for loop to help. Keep in mind that it should reposition naturally for various device resolutions.
+
+![Blue button positions](blueButtonPositions.png)
+
+> [solution]
+> 
+> When you're done, it should look something like this:
+> 
+	for (int i = 1; i <= 5; ++i)
+	{
+	   ui::Button* colorButton = ui::Button::create();
+	   colorButton->setAnchorPoint(Vec2(0.5f, 0.0f));
+	   colorButton->setPosition(Vec2(visibleSize.width * i * (1.0f/6.0f), 0.0f));
+	   colorButton->loadTextures("colorSwatch.png", "colorSwatch.png");
+	   colorButton->addTouchEventListener(CC_CALLBACK_2(DrawingCanvas::colorChangePressed, this));
+	   colorButton->setColor(Color3B(COLOR_BLUE));
+	   colorButtonLayout->addChild(colorButton);
+	}
+	
+Now lets assign the colors to the buttons. Assign the colors in this order: `RED`, `YELLOW`, `GREEN`, `BLUE`, `PURPLE`.
+
+Finally, we're going to have the default color be `GREEN`. So on the green button, add the `check` as a child like this:
+
+	colorButton->addChild(this->check);
+	
+So now it should look like this:
+
+![](buttonsWithColors.png)
+
+#Implement Color Picking
+
+#Playing with the Stroke
