@@ -21,13 +21,15 @@ There is a *NetworkManagerDelegate* interface, which is implemented by Networkin
 
 NetworkingWrapper also defines a delegate interface, called *NetworkingDelegate*. We will define a class in our app that inherits from the *NetworkingDelegate* interface so that we may receive communications from NetworkingWrapper.
 
-It is a bit confusing. Here's a diagram to help you understand:
+It can be a bit confusing. Here's a diagram to help you understand:
 
 ![Network diagram](networkingDiagram.png)
 
+If that's too small, you can find a bigger version [here](https://raw.githubusercontent.com/MakeSchool-Tutorials/Doodler-Cpp/master/P5-Make-it-Multiplayer/networkingDiagram.png).
+
 > [action]
 > 
-Download [this .zip file](https://raw.githubusercontent.com/MakeSchool-Tutorials/Doodler-Cpp/tree/master/P5-Make-it-Multiplayer/NetworkingClasses.zip) that contains the aformentioned classes.
+Download [this .zip file](https://github.com/MakeSchool-Tutorials/Doodler-Cpp/blob/master/P5-Make-it-Multiplayer/NetworkingClasses.zip?raw=true) that contains the aformentioned classes.
 >
 Unzip it and move the files into the *Classes* directory in your project directory.
 >
