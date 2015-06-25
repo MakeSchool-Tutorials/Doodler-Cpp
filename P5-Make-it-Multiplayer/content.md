@@ -482,37 +482,43 @@ The last step is to convert the `StringBuffer` into a `std::string` that we can 
 	
 Great! Now we need to code `unpackLineDataJSON()`. This function will do the opposite of what `packLineData()` does - it will accept a `std::string` as input and will parse it into a `rapidjson::Document`. We can then access the values in the `Document` in order to populate a `LineData` `struct` that we will return.
 
+> [action]
+> 
 Start out by creating a document, and populating it by parsing the input `string`:
-
+>
 	rapidjson::Document document;
 	document.Parse<0>(json.c_str());
 	
 The `<0>` in `Parse` is some optional flags that can alter the behavior of `Parse`, but in this case we don't need any.
 
+> [action]
+> 
 Next, we populate three of the JSON objects that we created when we packed it, the starting point, end point and color:
-
+>
     rapidjson::Value& startDoc = document["startPoint"];
     rapidjson::Value& endDoc = document["endPoint"];
     rapidjson::Value& colorDoc = document["color"];
     
 The `&` is called the *reference operator*. It says "instead of creating a new copy of `startDoc`, just give me the same object that is in the document data structure already." It's helpful to use references to objects when you're sure you won't manipulate the value, because that saves having to create a copy of the object.
 
+> [action]
+> 
 Next we convert the `document` values to types that are more useful in Cocos2d-x:
-
+>
     Vec2 start = Vec2(startDoc["x"].GetDouble(), startDoc["y"].GetDouble());
     Vec2 end = Vec2(endDoc["x"].GetDouble(), endDoc["y"].GetDouble());
     float radius = document["radius"].GetDouble();
-    
+>    
 Also we populate a `Color4F` with the color that we are supposed to display:
-
+>
     float r = colorDoc["r"].GetDouble();
     float g = colorDoc["g"].GetDouble();
     float b = colorDoc["b"].GetDouble();
     float a = colorDoc["a"].GetDouble();
     Color4F color = Color4F(r, g, b, a);
-   
+>
 Finally, we create a new `LineData` object, and populate it before we return it.
-
+>
     LineData result;
     result.startPoint = start;
     result.endPoint = end;
@@ -520,52 +526,60 @@ Finally, we create a new `LineData` object, and populate it before we return it.
     result.color = color;
     return result;
     
-With that we have coded all the functions we need to encode and decode JSON strings. More complicated games might have many more JSON messages and encoders, but this is all we need for Doodler.
+With that we have coded all the functions we need to encode and decode JSON strings. More complicated games might have many more JSON encoders and decoders, but this is all we need for Doodler.
 
 #Hook it All Up
 
 Now that we can send the line drawing data between devices, all that's left to do is have `DrawingCanvas` be able to send what the user is drawing over the network, and to have it respond to and display the lines being sent to it.
 
+> [action]
+> 
 Create a new public method in *DrawingCanvas.h* that looks like this:
-
+>
 	void receivedData(const void* data, unsigned long length);
 	
 This is the callback we will get in `DrawingCanvas` when we receive a JSON message containing line data from the other device. Notice that we just get a pointer to a block of memory (`const void* data` has no type). We also get the `length` of the data in memory, so that we can be careful not to access any data outside of the JSON message. If we were to try to access memory outside the bounds of `length`, the app would crash because of a [segmentation fault](https://en.wikipedia.org/wiki/Segmentation_fault).
     
 The implementation of `receivedData()` is fairly simple:
 
+> [action]
+> 
 First, we reinterpret the untyped pointer to a C-style string:
-
+>
     const char* cstr = reinterpret_cast<const char*>(data);
     
-C-style strings are actually arrays of `char`s. C strings are not a particularly safe data type to use, but they are fairly common. C strings have the type `const char*`.
+C style strings are actually arrays of `char`s. C strings are not a particularly safe data type to use, but they are fairly common. C strings have the type `const char*`.
 
+> [action]
+> 
 Next we construct a `std::string` from the C string because we coded our `JSONPacker::unpackLineData` function to expect a `std::string`:
-
+>
 	std::string json = std::string(cstr, length);
-	
+>	
 Next we unpack the JSON string into a `LineData` `struct`:
-
+>
 	JSONPacker::LineData lineData = JSONPacker::unpackLineDataJSON(json);
-    
+>   
 Don't forget to `#include "JSONPacker.h"`.
-    
+>    
 Finally we draw the line segment that was sent over the network using the data from `lineData`:
-
+>
 	drawNode->drawSegment(lineData.startPoint, lineData.endPoint, lineData.radius, lineData.color);
 	
 Great! Now we can read incoming messages sent from the other device to draw their lines. But we need to be able to send our lines to the other device.
 
+> [action]
+> 
 In *DrawingCanvas.h*, add the following `protected` method:
-
+>
 	void sendStrokeOverNetwork(cocos2d::Vec2 startPoint, cocos2d::Vec2 endPoint, float radius, cocos2d::Color4F color);
-	
+>	
 This method should take those four input variables and pack them into a JSON-encoded `std::string`.
-
+>
 See if you can code it so that you generate the correct `json` `std::string`.
-
+>
 Once you've done that, we'll take that `std::string` and send it over the network using a method that we haven't coded yet. So for now, put this piece of code at the end of `sendStrokeOverNetwork()`:
-
+>
 	SceneManager::getInstance()->sendData(json.c_str(), json.length());
 
 Your final `sendStrokeOverNetwork()` method should look something like this:
@@ -584,22 +598,26 @@ Your final `sendStrokeOverNetwork()` method should look something like this:
 >	    
 		SceneManager::getInstance()->sendData(json.c_str(), json.length());
 	}
-	
-We have to call `sendStrokeOverNetwork()` at some point if we want the method to do its job. Let's put it in the `onTouchMoved` lambda expression, right after `drawNode->drawSegment()`:
 
+> [action]
+> 
+We have to call `sendStrokeOverNetwork()` at some point if we want the method to do its job. Let's put it in the `onTouchMoved` lambda expression, right after `drawNode->drawSegment()`:
+>
 	if (this->networkedSession)
  	{
 		this->sendStrokeOverNetwork(lastTouchPos, touchPos, radius, selectedColor);
 	}
-
+>
 Now let's move over to `SceneManager` to code the missing `sendData()` method. Declare it like this:
-
+>
 	void sendData(const void* data, unsigned long length);
 	
-The implementation is very simple - just call the same method on `networkingWrapper` and pass the parameters along.
+The implementation is very simple - just call the method with the same name in `networkingWrapper` and pass the parameters along.
 
 Now we have to code `receivedData()` in `SceneManager`. Again, it's very simple. We can just pass the data along to `drawingCanvas`, but there's one catch.
 
+> [action]
+> 
 Try to code it, and see if your implementation has any bugs. Can you fix it?
 
 The result should look like this:
@@ -613,5 +631,15 @@ The result should look like this:
 	        drawingCanvas->receivedData(data, length);
 	    }
 	}
-
+>
 We have to first check that `drawingCanvas` exists! If we call a method on a a nullptr then the game will crash.
+
+Guess what?  You're done!  You've made Doodler. Try it out!
+
+#Bonus
+
+If you want some additional challenges:
+
+- Make it so that pressing the clear button clears both screens in duo mode
+- Make it so that both devices display full-screen drawing, even with different resolutions and aspect ratios.
+- *Advanced*: Add support for up to 4 people drawing at the same time. (*You will need to do some programming in Objective-C to do this!*)
