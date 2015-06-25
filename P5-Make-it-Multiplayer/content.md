@@ -277,3 +277,83 @@ The compiler will complain about not knowing what `SceneManager` is... fix it!
 Now go to *DrawingCanvas.cpp* and fix the `backPressed()` method so that it uses the `returnToLobby()` method in `SceneManager`.
 
 At this point you can run the app! It should behave the exact same as before, except now there is only one class handling scene transitions, which is a much better architecture.
+
+#Let's Get Connected
+
+Now that we have single-player scene transitions working with `SceneManager`, let's add the code for the two-player mode.
+
+First, we'll have `SceneManager` create an instance of the `NetworkingWrapper` class which will allow is to communicate over the network.
+
+> [action]
+> 
+In *SceneManager.h*, declare a `private` instance variable for it:
+>
+    NetworkingWrapper* networkingWrapper;
+>   
+Now we'll create it in the `SceneManager`'s constructor:
+>
+    networkingWrapper = new NetworkingWrapper();
+    networkingWrapper->setDelegate(this);
+
+By setting ourselves as the delegate, we tell `networkingWrapper` to notify us of any data sent from the other device, or if the connection state has changed.
+
+We used the `new` keyword to create `networkingWrapper` which means it won't get deallocated until we `delete` it. Thankfully, we've already created a destructor; we should delete it there:
+
+	delete networkingWrapper;
+
+Still in `SceneManager`, declare and implement this new `public` method:
+
+    void connectAndEnterNetworkedGame(); 
+    
+The implementation is an easy one line - we tell the `networkingWrapper` to try to find us another device to play with:
+
+	networkingWrapper->attemptToJoinGame();
+	
+The `NetworkManager` is set up to scan for other devices on the local Bluetooth and WiFi networks. If it finds another device that is also scanning, an invitation is sent, which is automatically accepted. Then both devices will begin the procedure to connect to each other.
+
+As that happens, the `networkingWrapper` will inform us of connection state changes via the `stateChanged()` method. So let's implement that now.
+
+> [action]
+> 
+There are three states, `NOT_CONNECTED`, `CONNECTING`, and `CONNECTED`. Let's use a `CCLOG()` to log to the console every time the state changes with a message that says what state we just transitioned to. This will be helpful later, when trying to figure out if two devices found each other or not.
+
+<!--html comment for box break-->
+
+> [solution]
+> 
+> You should have come up with something like this
+>    
+	switch (state)
+	{
+		case ConnectionState::NOT_CONNECTED:
+			CCLOG("Not Connected");
+			break;
+>            
+ 		case ConnectionState::CONNECTING:
+			CCLOG("Connecting...");
+			break;
+>            
+		case ConnectionState::CONNECTED:
+			CCLOG("Connected!");
+			break;
+    }
+    
+Now we should make it so that once both devices are connected, the game automatically transitions us to the drawing canvas.
+
+> [action]
+> 
+When we are successfully connected, we can do this:
+>
+	if (!drawingCanvas)
+	{	
+		this->loadDrawingScene(true);
+	}
+
+The check to see if `drawingCanvas` already exists or not is important - if it does already exist then that means we're already in the drawing scene. In that case we don't want to reload a new one. This can actually happen fairly often - if a user is in a 2-player drawing session and they become disconnected, the `NetworkManager` will try to reconnect. If successful, we don't want to load a whole new drawing scene, and wipe out everything the user had already drawn!
+
+> [action]
+> 
+We're almost ready to test if we can get two devices to connect to each other! First though, we have to hook up the duo button. Make it so that when the duo button is touched (and the touch has ended), it calls `connectAndEnterNetworkedGame()`.
+
+Once you've done that you're ready to test! In order to test you will have to have at least one iOS device. You can run Doodler on that device, then change the build target to one of the iOS simulators, and run again. As long as your device and your computer are on the same WiFi network, they should be able to connect!
+
