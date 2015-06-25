@@ -357,3 +357,173 @@ We're almost ready to test if we can get two devices to connect to each other! F
 
 Once you've done that you're ready to test! In order to test you will have to have at least one iOS device. You can run Doodler on that device, then change the build target to one of the iOS simulators, and run again. As long as your device and your computer are on the same WiFi network, they should be able to connect!
 
+#Create the JSONPacker
+
+In order for there to be communication between two devices, they must agree on a *protocol*, a set of standards by which they can transfer information. For this app, we're going to use the very popular [JSON](https://en.wikipedia.org/wiki/JSON) standard. JSON stands for Javascript Object Notation. JSON is popular because it works natively with Javascript, the most popular web development language. It also has a very simple syntax, and is human readable, which makes it easy to develop with.
+
+If you are not familiar with JSON syntax, I recommend you read [this guide](http://adobe.github.io/Spry/articles/json_primer/json_primer.html).
+
+We're going to create some utility methods and data structures that will help make it easy to pack line data into the JSON format and unpack JSON back into line data that can be drawn on the screen. We will be using the C++ based [rapidjson](https://miloyip.github.io/rapidjson/md_doc_tutorial.html) library which is included in Cocos2d-x to encode and decode the JSON strings.
+
+> [action]
+> 
+Create a new C++ implementation and header file called JSONPacker. We're actually *not* going to create a class called JSONPacker, because we don't need to maintain any internal state to generate JSON. So we don't need to make a class, because there's no data members. Instead we'll adopt a more functional style - for any given input we will generate an output, and given the same input, the output will always be the same.
+
+Because we're not going to create a class, we will instead have to create a namespace. Otherwise the methods we declare would be in the *global namespace*, and if any other methods in the global namespace happen to have the same name then we'll get linker errors.
+
+> [action]
+> 
+This is what *JSONPacker.h* should look like.
+>
+	#include "cocos2d.h"
+>
+	namespace JSONPacker
+	{
+>
+	struct LineData
+	{
+	    cocos2d::Vec2 startPoint;
+	    cocos2d::Vec2 endPoint;
+	    cocos2d::Color4F color;
+	    float radius;
+	};
+>
+	LineData unpackLineDataJSON(std::string json);
+	std::string packLineData(LineData lineData);
+>
+	}
+	
+We declared `LineData` and our two packing methods in the `JSONPacker` namespace, which means when we want to access those in the future we will have to do so with the scope resolution operator, like this: `JSONPacker::LineData`. 
+
+We create `LineData` as a convenient way to store everything necessary to draw a line on the screen as a single variable. Notice that `unpackLineDataJSON` takes a JSON string as an input, and returns a `LineData` object as output. Being able to return 4 different variables in one `LineData` object is very convenient.
+
+> [action]
+> 
+Switch over to *JSONPacker.cpp* so we can code the implementations of `unpackLineDataJSON` and `packLineData`.
+>
+First, let's declare
+>
+	using namespace cocos2d;
+>	
+Which will save us some typing in the future.
+>
+Next, we will write 
+>
+	namespace JSONPacker 
+	{
+>	
+	}
+>	
+So that our implementations are also in the `JSONPacker` namespace.
+>	
+Let's also `#include` all the files we'll need from the rapidjson framework at the top:
+>
+	#include "json/document.h"
+	#include "json/writer.h"
+	#include "json/stringbuffer.h"
+	
+
+>
+First we will code `packLineData` (inside the `namespace` declaration!):
+>
+	std::string packLineData(LineData lineData)
+	{
+>
+	}
+>	
+Declare a rapidjson Document object:
+>
+	rapidjson::Document document;
+	
+We will be manipulating the contents of the `document` as we add our line data to it. `Document` is designed to be very fast to manipulate in C++. Only when we're finished manipulating the contents of `document`, do we convert it into a JSON string.
+
+> [action]
+> 
+Next we tell `document` what the root Javascript data-structure is.
+>
+	document.SetObject();
+	
+In this case we set the root structure to an *object*, but it could have also been an *array* or a value type like *bool* or *int*.
+
+> [action]
+> 
+Next we'll create an object-type `rapidjson::Value` representing the startPoint of the line:
+>
+    rapidjson::Value startPt(rapidjson::kObjectType);
+    startPt.AddMember("x", lineData.startPoint.x, document.GetAllocator());
+    startPt.AddMember("y", lineData.startPoint.y, document.GetAllocator());
+>    
+Now create a similar object-type `rapidjson::Value` called `endPt` that will store `lineData.endPoint.x` and `lineData.endPoint.y`.
+>
+Next we'll create the JSON object to store the RGBA color of the line:
+>
+    rapidjson::Value lineColor(rapidjson::kObjectType);
+    lineColor.AddMember("r", lineData.color.r, document.GetAllocator());
+    lineColor.AddMember("g", lineData.color.g, document.GetAllocator());
+    lineColor.AddMember("b", lineData.color.b, document.GetAllocator());
+    lineColor.AddMember("a", lineData.color.a, document.GetAllocator());
+>   
+After that we add the `startPt`, `endPt`, and `lineColor` objects that we've created to the document, in addition to `radius`.
+>
+	document.AddMember("startPoint", startPt, document.GetAllocator());
+    document.AddMember("endPoint", endPt, document.GetAllocator());
+    document.AddMember("radius", lineData.radius, document.GetAllocator());
+    document.AddMember("color", lineColor, document.GetAllocator());
+>   
+Now we begin the steps to convert the `document` into a `string`. We make a `rapidjson::StringBuffer` in which we'll store the JSON string created by a `rapidjson::Writer`
+>
+	 rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    document.Accept(writer);
+>   
+The last step is to convert the `StringBuffer` into a `std::string` that we can return as the output of our function.
+>
+	return std::string(buffer.GetString(), buffer.Size());
+	
+Great! Now we need to code `unpackLineDataJSON()`. This function will do the opposite of what `packLineData()` does - it will accept a `std::string` as input and will parse it into a `rapidjson::Document`. We can then access the values in the `Document` in order to populate a `LineData` `struct` that we will return.
+
+Start out by creating a document, and populating it by parsing the input `string`:
+
+	rapidjson::Document document;
+	document.Parse<0>(json.c_str());
+	
+The `<0>` in `Parse` is some optional flags that can alter the behavior of `Parse`, but in this case we don't need any.
+
+Next, we populate three of the JSON objects that we created when we packed it, the starting point, end point and color:
+
+    rapidjson::Value& startDoc = document["startPoint"];
+    rapidjson::Value& endDoc = document["endPoint"];
+    rapidjson::Value& colorDoc = document["color"];
+    
+The `&` is called the *reference operator*. It says "instead of creating a new copy of `startDoc`, just give me the same object that is in the document data structure already." It's helpful to use references to objects when you're sure you won't manipulate the value, because that saves having to create a copy of the object.
+
+Next we convert the `document` values to types that are more useful in Cocos2d-x:
+
+    Vec2 start = Vec2(startDoc["x"].GetDouble(), startDoc["y"].GetDouble());
+    Vec2 end = Vec2(endDoc["x"].GetDouble(), endDoc["y"].GetDouble());
+    float radius = document["radius"].GetDouble();
+    
+Also we populate a `Color4F` with the color that we are supposed to display:
+
+    float r = colorDoc["r"].GetDouble();
+    float g = colorDoc["g"].GetDouble();
+    float b = colorDoc["b"].GetDouble();
+    float a = colorDoc["a"].GetDouble();
+    Color4F color = Color4F(r, g, b, a);
+   
+Finally, we create a new `LineData` object, and populate it before we return it.
+
+    LineData result;
+    result.startPoint = start;
+    result.endPoint = end;
+    result.radius = radius;
+    result.color = color;
+    return result;
+    
+With that we have coded all the functions we need to encode and decode JSON strings. More complicated games might have many more JSON messages and encoders, but this is all we need for Doodler.
+
+
+    
+
+    
+    
