@@ -283,17 +283,66 @@ Now set the positions of the buttons so that it looks like this. You can use the
 	   colorButton->setColor(Color3B(COLOR_BLUE));
 	   colorButtonLayout->addChild(colorButton);
 	}
-	
+
+> [action]
+> 
 Now lets assign the colors to the buttons. Assign the colors in this order: `RED`, `YELLOW`, `GREEN`, `BLUE`, `PURPLE`.
-
+>
 Finally, we're going to have the default color be `GREEN`. So on the green button, add the `check` as a child like this:
-
+>
 	colorButton->addChild(this->check);
 	
 So now it should look like this:
 
-![](buttonsWithColors.png)
+![Simulator with 5 color buttons](buttonsWithColors.png)
 
 #Implement Color Picking
+
+So now that we have the buttons, lets make them work!
+
+> [action]
+> 
+First we'll initialize the value of `selectedColor`. In `DrawingCanvas::init()`:
+>
+	selectedColor = COLOR_GREEN;
+	
+The check mark defaults to being on the green button, so that works nicely.
+
+> [action]
+> 
+Next, modify the `drawSegment` method call to draw with `selectedColor` instead of the black that we had there previously.
+
+Now let's work on `colorChangePressed`. Here's a problem - how are we going to know which button was pressed? They are all triggering the same callback method.
+
+Luckily, this was considered. The button that was pressed is passed in as the `pSender` parameter.
+
+> [action]
+> 
+First, cast `pSender` into a `ui::Button` so that we can call its `Button` methods:
+>
+	ui::Button* pressedButton = static_cast<ui::Button*>(pSender);
+>
+Next, implement color changing by getting the color of the button, and setting `selectedColor` to that. You may have to transform from one kind of color format to another. We only want to change the color if `TouchEventType` is `TouchEventType::ENDED`.
+
+Once you've done that, try running it!
+
+It's nice, but there's a problem. The check mark doesn't move to the selected color.
+
+> [action]
+> 
+You can fix that by using the `removeFromParent()` method on `check`, then adding it as a child to the button that was pressed.
+
+There is one problem with doing that, however. When you call `removeFromParent()` on `check`, `check` is no longer under the control of its parent, and `release()` is called on `check`. Once released, `check`'s reference count drops to `0`, and `check` is deallocated.
+
+> [action]
+> 
+So before calling `removeFromParent()` on `check`, you must first `retain()` it so it isn't deallocated. Then, once it's added to another button, you can call `release()`, as we no longer want to retain `check`.
+
+It works! Great.
+
+> [action]
+> 
+One more thing with the color picker buttons: let's make it more responsive to the user. Make it so that when the touch begins, the touched button scales to 85% of it's original size. You can use the `setScale()` method. Once the touch has ended, or is cancelled, return the scale to 100% of the original size. That way it will feel more like a real button being pressed.
+
 
 #Playing with the Stroke
