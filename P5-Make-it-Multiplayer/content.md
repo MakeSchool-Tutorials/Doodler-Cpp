@@ -102,7 +102,7 @@ In addition to handling the networking, `SceneManager` will be in charge of hand
 > 
 Create a new class called `SceneManager`. `SceneManager` should inherit from `NetworkingDelegate`. To do that, you must `#include "NetworkingWrapper.h"` in *SceneManager.h*.
 
-`SceneManager` is going to be a *singleton*. That is, there will only ever be one instance of `SceneManager` that we interact with. That makes sense if you consider that `SceneManager` will be handling the transition between scenes - we don't want multiple instances of a class to be handling something like that - it can become confusing.
+`SceneManager` is going to be a *singleton*. That is, there will only ever be one instance of `SceneManager` that we interact with. That makes sense if you consider that `SceneManager` will be handling the transition between scenes - we wouldn't want multiple instances of a class to be handling something like that.
 
 > [action]
 > 
@@ -110,7 +110,7 @@ In *SceneManager.h*, declare a `public` method that looks like this:
 >
 	static SceneManager* getInstance();
 	
-In Cocos2d-x, whenever interacting with a singleton, you get the one instance of it with the `getInstance()` method. We will respect that style and do the same.
+In Cocos2d-x, whenever interacting with a singleton, you can retrieve the single instance with the `getInstance()` method. We will respect that style and do the same.
 
 > [action]
 > 
@@ -154,9 +154,9 @@ Next declare a `private` *constructor* and *destructor* in *SceneManager.h*. The
 	SceneManager();
 	~SceneManager();
 	
-We haven't really seen constructors or destructors so far, because Cocos2d-x like to manage the lifecycle of its objects through *reference counting*, and the `create()` and `init()` methods.
+We haven't really seen constructors or destructors so far, because Cocos2d-x likes to manage the lifecycle of its objects through *reference counting*, and the `create()` and `init()` methods.
 
-But because `SceneManager` doesn't inherit from a Cocos2d-x class, we're going to create it the old-school C++ way.
+But because `SceneManager` doesn't inherit from a Cocos2d-x class, we're going to use constructors and destructors.
 
 > [action]
 > 
@@ -640,8 +640,9 @@ Guess what?  You're done!  You've made Doodler. Try it out!
 
 #Bonus
 
-If you want some additional challenges:
+Here are some additional challenges (in order from easy to hard):
 
 - Make it so that pressing the clear button clears both screens in duo mode
+- Add an animated spinning sprite that displays while two devices are connecting
 - Make it so that both devices display full-screen drawing, even with different resolutions and aspect ratios.
 - *Advanced*: Add support for up to 4 people drawing at the same time. (*You will need to do some programming in Objective-C to do this!*)
