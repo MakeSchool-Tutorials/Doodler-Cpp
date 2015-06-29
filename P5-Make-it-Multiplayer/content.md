@@ -640,7 +640,7 @@ Guess what?  You're done!  You've made Doodler. Try it out!
 
 #Bonus
 
-Here are some additional challenges (in order from easy to hard):
+Here are some optional challenges (in order from easy to hard):
 
 - Make it so that pressing the clear button clears both screens in duo mode
 - Add an animated spinning sprite that displays while two devices are connecting
